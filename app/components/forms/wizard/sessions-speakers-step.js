@@ -5,15 +5,23 @@ import EventWizardMixin from 'open-event-frontend/mixins/event-wizard';
 import { groupBy } from 'lodash-es';
 import { sortCustomFormFields } from 'open-event-frontend/utils/sort';
 import { SPEAKER_FORM_ORDER, SESSION_FORM_ORDER } from 'open-event-frontend/models/custom-form';
+import moment from 'moment';
+import $ from 'jquery';
 
 export default Component.extend(EventWizardMixin, FormMixin, {
 
   // TODO: Removing the Session & Speaker Time Validations due to the weird and buggy behaviour. Will be restored once a perfect solution is found. Please check issue: https://github.com/fossasia/open-event-frontend/issues/3667
   getValidationRules() {
+    $.fn.form.settings.rules.checkStartDateCFS = () => {
+      return !(moment($('.ui.form').form('get value', 'start_date')).isAfter(this.data.event.startsAtDate));
+    };
+    $.fn.form.settings.rules.checkEndDateCFS = () => {
+      return !(moment($('.ui.form').form('get value', 'end_date')).isAfter(this.data.event.startsAtDate));
+    };
     return {
       inline : true,
       delay  : false,
-      on     : 'blur',
+      on     : 'change',
       fields : {
         sessionType: {
           identifier : 'session',
@@ -48,6 +56,10 @@ export default Component.extend(EventWizardMixin, FormMixin, {
             {
               type   : 'empty',
               prompt : this.l10n.t('Please tell us when your event starts')
+            },
+            {
+              type   : 'checkStartDateCFS',
+              prompt : this.l10n.t('CFS start time should be before than event start time')
             }
           ]
         },
@@ -57,6 +69,10 @@ export default Component.extend(EventWizardMixin, FormMixin, {
             {
               type   : 'empty',
               prompt : this.l10n.t('Please tell us when your event ends')
+            },
+            {
+              type   : 'checkEndDateCFS',
+              prompt : this.l10n.t('CFS end time should be before than event start time')
             }
           ]
         },
@@ -110,6 +126,10 @@ export default Component.extend(EventWizardMixin, FormMixin, {
     return this.data.sessionTypes.filterBy('isDeleted', false);
   }),
 
+  hasCallForSpeaker: computed('data.speakersCall.announcement', function() {
+    return !!this.data.speakersCall.announcement;
+  }),
+
   customForm: computed('data.customForms.[]', function() {
     const grouped = groupBy(this.data.customForms.toArray(), customForm => customForm.get('form'));
 
@@ -119,8 +139,13 @@ export default Component.extend(EventWizardMixin, FormMixin, {
     return grouped;
   }),
 
-  microlocations: computed('data.microlocations.@each.isDeleted', function() {
-    return this.data.event.microlocations.filterBy('isDeleted', false);
+  microlocations: computed('data.microlocations.@each.isDeleted', 'data.microlocations.@each.position', function() {
+    const sortedRooms = this.data.event.microlocations.sortBy('position').filterBy('isDeleted', false);
+    sortedRooms.forEach((room, idx) => {
+      room.set('position', idx);
+    });
+
+    return sortedRooms;
   }),
 
   complexCustomForms: computed('data.customForms.@each.isComplex', function() {
@@ -163,9 +188,6 @@ export default Component.extend(EventWizardMixin, FormMixin, {
         case 'track':
           this.data.tracks.addObject(this.store.createRecord('track'));
           break;
-        case 'microlocation':
-          this.data.microlocations.addObject(this.store.createRecord('microlocation'));
-          break;
       }
     },
     addCustomField() {
@@ -173,6 +195,33 @@ export default Component.extend(EventWizardMixin, FormMixin, {
         event     : this.data.event,
         isComplex : true
       }));
+    },
+    removeField(field) {
+      this.data.customForms.removeObject(field);
+    },
+    addRoom(index) {
+      this.microlocations.forEach(room => {
+        const pos = room.get('position');
+        pos > index && room.set('position', pos + 1);
+      });
+      this.data.event.microlocations.addObject(this.store.createRecord('microlocation', { position: index + 1 }));
+    },
+    removeRoom(room, index) {
+      room.deleteRecord();
+      this.microlocations.forEach(item => {
+        const pos = item.get('position');
+        pos > index && item.set('position', pos - 1);
+      });
+    },
+    moveRoom(item, direction) {
+      const idx = item.get('position');
+      const otherIdx = direction === 'up' ? (idx - 1) : (idx + 1);
+      const other = this.microlocations.find(item => item.get('position') === otherIdx);
+      other.set('position', idx);
+      item.set('position', otherIdx);
+    },
+    resetCFS() {
+      this.set('data.speakersCall.announcement', null);
     },
     onChange() {
       this.onValid(() => {});

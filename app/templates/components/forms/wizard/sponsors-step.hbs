@@ -57,9 +57,9 @@
         </div>
         <div class="six wide field">
           <label>{{t 'URL'}}</label>
-          <Widgets::Forms::LinkInput
-            @segmentedLink={{sponsor.segmentedLink}}
-            @name="url" />
+          <Widgets::Forms::LinkField
+            @value={{sponsor.url}}
+            @onChange={{action (mut sponsor.url)}} />
         </div>
       </div>
       <div class="fields">
@@ -82,7 +82,7 @@
         <div class="ui section divider"></div>
       {{/if}}
     {{/each}}
-    <button type="button" class="ui primary {{if this.device.isMobile 'small'}} button" {{action 'addSponsor'}}>{{t (if this.sponsors.length 'Add another sponsor' 'Add sponsor')}}</button>
+    <button type="button" class="ui primary {{if this.device.isMobile 'small'}} button" {{action 'addSponsor'}}>{{if this.sponsors.length (t 'Add another sponsor') (t 'Add sponsor')}}</button>
     <div class="spacer-50"></div>
   {{else}}
     <div class="spacer-50"></div>
@@ -92,6 +92,7 @@
 <Forms::Wizard::WizardFooter
   @event={{this.data.event}}
   @loading={{this.loading}}
+  @device={{this.device}}
   @onSaved={{action 'saveForm'}}
   @onSaveDraft={{action 'saveDraft'}}
   @move={{action 'move'}} />

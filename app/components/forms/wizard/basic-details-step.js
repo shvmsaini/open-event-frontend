@@ -139,13 +139,15 @@ export default Component.extend(FormMixin, EventWizardMixin, {
       return $('.ui.form').form('get value', 'min_price') <= $('.ui.form').form('get value', 'max_price');
     };
     $.fn.form.settings.rules.checkMaxMinOrder = () => {
-      return $('.ui.form').form('get value', 'ticket_min_order') <= $('.ui.form').form('get value', 'ticket_max_order');
+      return parseInt($('.ui.form').form('get value', 'ticket_min_order'), 10) <= parseInt($('.ui.form').form('get value', 'ticket_max_order'), 10);
     };
-
+    $.fn.form.settings.rules.checkValidTimeDifference = () => {
+      return !($('[name=start_date]')[0].value === $('[name=end_date]')[0].value && moment($('[name=start_time]')[0].value, 'HH:mm').isSameOrAfter(moment($('[name=end_time]')[0].value, 'HH:mm')));
+    };
     const validationRules = {
       inline : true,
       delay  : false,
-      on     : 'blur',
+      on     : 'change',
       fields : {
         name: {
           identifier : 'name',
@@ -198,6 +200,10 @@ export default Component.extend(FormMixin, EventWizardMixin, {
             {
               type   : 'empty',
               prompt : this.l10n.t('Please give a start time')
+            },
+            {
+              type   : 'checkValidTimeDifference',
+              prompt : this.l10n.t('Starting time should be lesser than the ending time')
             }
           ]
         },
@@ -208,6 +214,10 @@ export default Component.extend(FormMixin, EventWizardMixin, {
             {
               type   : 'empty',
               prompt : this.l10n.t('Please give an end time')
+            },
+            {
+              type   : 'checkValidTimeDifference',
+              prompt : this.l10n.t('Ending time should be greater than the starting time')
             }
           ]
         },
@@ -337,7 +347,7 @@ export default Component.extend(FormMixin, EventWizardMixin, {
           rules      : [
             {
               type   : 'email',
-              prompt : this.l10n.t('Please enter a valid email')
+              prompt : this.l10n.t('Please enter a valid email address')
             },
             {
               type   : 'empty',
@@ -431,7 +441,7 @@ export default Component.extend(FormMixin, EventWizardMixin, {
         })
         .catch(error => {
           console.error('Error while setting stripe authorization in event', error);
-          this.notify.error(this.l10n.t(`${error.message}. Please try again`), {
+          this.notify.error(error.message + '. ' + this.l10n.t('Please try again'), {
             id: 'basic_detail_err'
           });
         });

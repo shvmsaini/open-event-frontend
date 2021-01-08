@@ -121,14 +121,14 @@ export default Mixin.create(MutableArray, CustomFormMixin, {
       for (const property of ['tracks', 'sessionTypes', 'microlocations', 'customForms']) {
         const items = data[property];
         for (const item of items ? items.toArray() : []) {
-          bulkPromises.push(event.get('isSessionsSpeakersEnabled') ? item.save() : item.destroyRecord());
+          bulkPromises.push(item.save());
         }
       }
 
       for (const property of ['sponsors']) {
         const items = data[property];
         for (const item of items ? items.toArray() : []) {
-          bulkPromises.push(event.get('isSponsorsEnabled') ? item.save() : item.destroyRecord());
+          bulkPromises.push(item.save());
         }
       }
 
@@ -170,7 +170,7 @@ export default Mixin.create(MutableArray, CustomFormMixin, {
             this.notify.error(this.l10n.tVar(error.detail));
           });
         } else {
-          this.notify.error(this.l10n.t('An unexpected error has occurred'));
+          this.notify.error(this.l10n.t('An unexpected error has occurred.'));
         }
       })
       .finally(() => {
@@ -216,15 +216,19 @@ export default Mixin.create(MutableArray, CustomFormMixin, {
   actions: {
     saveDraft() {
       this.onValid(() => {
-        preSaveActions.call(this);
-        this.set('data.event.state', 'draft');
-        this.sendAction('save');
+        const valid = preSaveActions.call(this);
+        if (valid) {
+          this.set('data.event.state', 'draft');
+          this.sendAction('save');
+        }
       });
     },
     saveForm() {
       this.onValid(() => {
-        preSaveActions.call(this);
-        this.sendAction('save', this.data);
+        const valid = preSaveActions.call(this);
+        if (valid) {
+          this.sendAction('save', this.data);
+        }
       });
     },
     move(direction) {
@@ -237,7 +241,7 @@ export default Mixin.create(MutableArray, CustomFormMixin, {
       this.onValid(() => {
         const allTicketsDeleted = this.allTicketsDeleted(this.data.event.tickets, this.deletedTickets);
         if (allTicketsDeleted) {
-          this.notify.error('Tickets are required for publishing/published event');
+          this.notify.error(this.l10n.t('Tickets are required for publishing/published event'));
         }
         callback(!allTicketsDeleted);
       });
@@ -247,7 +251,8 @@ export default Mixin.create(MutableArray, CustomFormMixin, {
       if (type === 'socialLinks') {
         this.get(`data.event.${type}`).pushObject(this.store.createRecord(model, {
           identifier : v1(),
-          isCustom   : false
+          isCustom   : false,
+          name       : 'Website'
         }));
       } else if (type === 'customLink') {
         this.get('data.event.socialLinks').pushObject(this.store.createRecord(model, {
@@ -284,4 +289,10 @@ function preSaveActions() {
       this.set('data.event.locationName', null);
     }
   }
+
+  if (!this.data.event.isStripeConnectionValid) {
+    this.notify.error(this.l10n.t('You need to connect to your Stripe account, if you choose Stripe as a payment gateway.'));
+  }
+
+  return this.data.event.isStripeConnectionValid;
 }

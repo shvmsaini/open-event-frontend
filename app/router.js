@@ -45,6 +45,12 @@ Router.map(function() {
     this.route('session', function() {
       this.route('view', { path: '/:session_id' });
     });
+    this.route('stream', { path: '/video/:video_name' }, function() {
+      this.route('view', { path: '/:stream_id' });
+    });
+    this.route('speaker', function() {
+      this.route('view', { path: '/:speaker_id' });
+    });
     this.route('cfs', { path: '/cfs/:speaker_call_hash' }, function() {
       this.route('new-speaker');
       this.route('new-session');
@@ -73,8 +79,10 @@ Router.map(function() {
         this.route('sessions-speakers');
         this.route('attendee');
       });
-      this.route('export');
-      this.route('settings');
+      this.route('settings', function() {
+        this.route('export');
+        this.route('options');
+      });
       this.route('sessions', function() {
         this.route('list', { path: '/:session_status' });
         this.route('create');
@@ -103,6 +111,11 @@ Router.map(function() {
       this.route('speakers', function() {
         this.route('list', { path: '/:speakers_status' });
         this.route('edit', { path: '/:speaker_id/edit' });
+        this.route('create');
+      });
+      this.route('videoroom', { path: '/video' }, function() {
+        this.route('list', { path: '/:status' });
+        this.route('edit', { path: '/:stream_id/edit' });
         this.route('create');
       });
       this.route('scheduler');
@@ -140,9 +153,6 @@ Router.map(function() {
     this.route('all', { path: '/:notification_state' });
   });
   this.route('admin', function() {
-    this.route('messages', function() {
-      this.route('list');
-    });
     this.route('events', function() {
       this.route('list', { path: '/:events_status' });
       this.route('import');
@@ -198,6 +208,7 @@ Router.map(function() {
       this.route('payment-gateway');
       this.route('ticket-fees');
       this.route('billing');
+      this.route('frontpage');
     });
     this.route('content', function() {
       this.route('social-links');
