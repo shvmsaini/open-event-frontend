@@ -26,6 +26,7 @@ export default class Event extends ModelBase.extend(CustomPrimaryKeyMixin, {
   identifier             : attr('string', { readOnly: true }),
   name                   : attr('string'),
   description            : attr('string'),
+  afterOrderMessage      : attr('string'),
   startsAt               : attr('moment', { defaultValue: () => moment.tz(detectedTimezone).add(1, 'months').startOf('day') }),
   endsAt                 : attr('moment', { defaultValue: () => moment.tz(detectedTimezone).add(1, 'months').hour(17).minute(0) }),
   timezone               : attr('string', { defaultValue: detectedTimezone }),
@@ -47,6 +48,8 @@ export default class Event extends ModelBase.extend(CustomPrimaryKeyMixin, {
   isSessionsSpeakersEnabled : attr('boolean', { defaultValue: false }),
   isFeatured                : attr('boolean', { defaultValue: false }),
   isPromoted                : attr('boolean', { defaultValue: false }),
+  isDemoted                 : attr('boolean', { defaultValue: false }),
+  isChatEnabled             : attr('boolean', { defaultValue: false }),
   isBillingInfoMandatory    : attr('boolean', { defaultValue: false }),
 
   isTaxEnabled    : attr('boolean', { defaultValue: false }),
@@ -90,6 +93,8 @@ export default class Event extends ModelBase.extend(CustomPrimaryKeyMixin, {
   liveStreamUrl : attr('string'),
   webinarUrl    : attr('string'),
 
+  chatRoomName: attr('string'),
+
   createdAt : attr('moment', { readOnly: true }),
   deletedAt : attr('moment'),
 
@@ -102,6 +107,7 @@ export default class Event extends ModelBase.extend(CustomPrimaryKeyMixin, {
   location            : belongsTo('event-location'),
   sessions            : hasMany('session'),
   sponsors            : hasMany('sponsor'),
+  exhibitors          : hasMany('exhibitor'),
   microlocations      : hasMany('microlocation'),
   tracks              : hasMany('track'),
   tickets             : hasMany('ticket'),
@@ -124,12 +130,14 @@ export default class Event extends ModelBase.extend(CustomPrimaryKeyMixin, {
   roleInvites     : hasMany('role-invite'),
   videoStream     : belongsTo('video-stream'),
 
-  owner           : belongsTo('user', { inverse: null }),
-  organizers      : hasMany('user', { inverse: null }),
-  coorganizers    : hasMany('user', { inverse: null }),
-  trackOrganizers : hasMany('user', { inverse: null }),
-  registrars      : hasMany('user', { inverse: null }),
-  moderators      : hasMany('user', { inverse: null }),
+  owner             : belongsTo('user', { inverse: null }),
+  organizers        : hasMany('user', { inverse: null }),
+  coorganizers      : hasMany('user', { inverse: null }),
+  trackOrganizers   : hasMany('user', { inverse: null }),
+  registrars        : hasMany('user', { inverse: null }),
+  moderators        : hasMany('user', { inverse: null }),
+  roles             : hasMany('users-events-role'),
+  sessionFavourites : hasMany('user-favourite-session'),
 
   /**
    * The discount code applied to this event [Form(1) discount code]
@@ -196,4 +204,12 @@ export default class Event extends ModelBase.extend(CustomPrimaryKeyMixin, {
     return this.schedulePublishedOn && this.schedulePublishedOn.toISOString() !== moment(0).toISOString();
   })
 
-}) {}
+}) {
+
+  hasAccess(currentUser) {
+    return currentUser && (currentUser.isAnAdmin || currentUser.email === this.owner.get('email')
+        || this.organizers.includes(currentUser)
+        || this.coorganizers.includes(currentUser));
+  }
+
+}

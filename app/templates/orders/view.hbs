@@ -1,4 +1,4 @@
-<div class="ui one column container stackable doubling left grid">
+<div class="ui one column container stackable doubling left grid" id="top">
   <div class="row print">
     <div class="column">
       <h2>{{this.model.order.event.name}}</h2>
@@ -20,11 +20,19 @@
         @event={{this.model.event}}
         @eventCurrency={{this.model.order.event.paymentCurrency}} />
       <br/>
+      {{#if this.model.event.afterOrderMessage}}
+        <Orders::AfterOrderMessage
+          @event={{this.model.event}} />
+        <br/>
+      {{/if}}
       <Forms::Orders::AttendeeList
         @save="save"
         @data={{this.model.order}}
         @fields={{this.model.form}}
         @event={{this.model.event}} />
+      <Forms::Orders::CancelOrder
+        @cancelOrder={{action 'cancelOrder'}}
+        @order={{this.model.order}} />
     </div>
     <div class="six wide column">
       <Orders::EventInfo
@@ -32,17 +40,24 @@
       <br/>
       {{#if this.showTicketsButton}}
         <div class="d-flex">
-          <button class="ui labeled icon flex-1 {{if this.isLoadingTickets 'loading'}} {{if this.device.isMobile 'fluid'}} button"
-          {{action this.downloadTickets this.model.event.name this.model.order.identifier}}>
-          <i class="download icon"></i>
-          {{t 'All Tickets'}}
-          </button>
+          {{#if (not-eq this.model.order.status 'cancelled')}}
+            <button class="ui labeled icon flex-1 {{if this.isLoadingTickets 'loading'}} {{if this.device.isMobile 'fluid'}} button"
+            {{action this.downloadTickets this.model.event.name this.model.order.identifier}}>
+            <i class="download icon"></i>
+            {{t 'All Tickets'}}
+            </button>
+          {{/if}}
           <button {{action 'downloadInvoice' this.model.event.name this.model.order.identifier }}
           class="ui labeled icon blue flex-1 {{if this.isLoadingInvoice 'loading'}} {{if this.device.isMobile 'fluid'}} button">
           <i class="file alternate icon"></i>
           {{t 'Download Invoice'}}
           </button>
         </div>
+        <br/>
+      {{/if}}
+      {{#if this.model.taxDetails}}
+        <Orders::CompanyInfo
+          @tax={{this.model.taxDetails}} />
         <br/>
       {{/if}}
       <Orders::TicketHolder

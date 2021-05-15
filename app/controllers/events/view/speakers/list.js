@@ -6,12 +6,14 @@ import { inject as service } from '@ember/service';
 export default class extends Controller.extend(EmberTableControllerMixin) {
   @service errorHandler;
 
+  sort_by = 'order';
+
   get columns() {
     return [
       {
         name            : ' ',
         valuePath       : 'thumbnailImageUrl',
-        extraValuePaths : ['photoUrl'],
+        extraValuePaths : ['id', 'event', 'photoUrl'],
         cellComponent   : 'ui-table/cell/events/view/speakers/speaker-logo'
       },
       {
@@ -89,12 +91,12 @@ export default class extends Controller.extend(EmberTableControllerMixin) {
 
   @action
   editSpeaker(id) {
-    this.transitionToRoute('events.view.speakers.edit', id);
+    this.transitionToRoute('events.view.speaker.edit', id);
   }
 
   @action
-  viewSpeaker(speaker) {
-    this.transitionToRoute('public.speaker.view', speaker.event.get('identifier'), speaker.id);
+  viewSpeaker(id) {
+    this.transitionToRoute('events.view.speaker.view', id);
   }
 
   @action

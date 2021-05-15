@@ -1,4 +1,4 @@
-export const socialMediaNames = ['Twitter', 'Facebook', 'Instagram', 'Linkedin', 'YouTube', 'GitHub', 'GitLab', 'Gitter', 'Telegram', 'Patreon', 'Vimeo', 'Flickr', 'Google Groups', 'VK', 'Xing', 'Weibo'];
+export const socialMediaNames = ['Facebook', 'Flickr', 'GitHub', 'GitLab', 'Gitter', 'Google Groups', 'Instagram', 'Linkedin', 'Mastodon', 'Patreon', 'Telegram', 'Twitter', 'Vimeo', 'VK', 'Weibo', 'Xing', 'YouTube'];
 
 const identifierOverrides: { [key: string]: string } = {
   'Google Groups': 'groups.google'
@@ -34,6 +34,7 @@ export const buttonColor: { [key: string]: string } = {
   telegram        : 'blue',
   patreon         : 'red',
   vimeo           : 'teal',
+  mastodon        : 'blue',
   flickr          : 'blue',
   xing            : 'teal',
   weibo           : 'red',
